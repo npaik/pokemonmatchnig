@@ -7,6 +7,27 @@ body {
   font-family: "Satoshi", sans-serif;
 }
 
+.game-size-btn,
+.new-game-btn {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.game-size-btn:hover,
+.new-game-btn:hover {
+  background-color: #0056b3;
+}
+
+.grid-buttons {
+  margin-bottom: 20px;
+}
+
 .card .front {
   transform: rotateY(90deg);
   transition: all ease-in 0.2s;

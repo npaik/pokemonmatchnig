@@ -1,3 +1,6 @@
+import { useState, useEffect } from "react";
+import Card from "./components/Card";
+
 import Alakazam from "./assets/Alakazam.jpg";
 import Articuno from "./assets/Articuno.jpg";
 import Burbasaur from "./assets/Burbasaur.jpg";
@@ -23,10 +26,6 @@ import Snorlax from "./assets/Snorlax.jpg";
 import Squirtle from "./assets/Squirtle.jpg";
 import Vaporeon from "./assets/Vaporeon.jpg";
 import Zapdos from "./assets/Zapdos.jpg";
-
-import useStore from "./store";
-import Card from "./components/Card";
-import { useEffect } from "react";
 
 const cardImages = [
   {
@@ -157,101 +156,117 @@ const cardImages = [
 ];
 
 function App() {
-  const [
-    cards,
-    setCards,
-    turns,
-    setTurns,
-    choiceOne,
-    setChoiceOne,
-    choiceTwo,
-    setChoiceTwo,
-    setDisabled,
-  ] = useStore((state) => [
-    state.cards,
-    state.setCards,
-    state.turns,
-    state.setTurns,
-    state.choiceOne,
-    state.setChoiceOne,
-    state.choiceTwo,
-    state.setChoiceTwo,
-    state.setDisabled,
-  ]);
+  const [cards, setCards] = useState([]);
+  const [choiceOne, setChoiceOne] = useState(null);
+  const [choiceTwo, setChoiceTwo] = useState(null);
+  const [pairs, setPairs] = useState(4);
+  const [score, setScore] = useState(0);
+  const [disabled, setDisabled] = useState(false);
 
-  const shuffleCards = () => {
-    const selectedCards = cardImages
+  const shuffleCards = (selectedPairs = pairs) => {
+    const shuffledCards = [...cardImages]
       .sort(() => Math.random() - 0.5)
-      .slice(0, 6);
+      .slice(0, selectedPairs) 
+      .map((card) => ({ ...card, id: Math.random() })) 
+      .flatMap((card) => [card, { ...card, id: Math.random() }])
+      .sort(() => Math.random() - 0.5);
 
-    const shuffledCards = [...selectedCards, ...selectedCards]
-      .sort(() => Math.random() - 0.5)
-      .map((card) => ({ ...card, id: crypto.randomUUID() }));
-
-    setCards(shuffledCards);
-    setTurns(0);
-  };
-
-  console.log({
-    cards,
-    turns,
-  });
-  const checkMatch = () => {
-    if (!(choiceOne && choiceTwo)) {
-      return;
-    }
-    setDisabled(true);
-    const isMatch = choiceOne?.img === choiceTwo?.img;
-    if (isMatch) {
-      setCards(
-        cards.map((card) => {
-          return card.img === choiceOne?.img
-            ? { ...card, matched: true }
-            : card;
-        })
-      );
-    }
-
-    setTimeout(() => {
-      resetTurn();
-    }, 1000);
-  };
-
-  const resetTurn = () => {
     setChoiceOne(null);
     setChoiceTwo(null);
-    setTurns(turns + 1);
-    setTimeout(() => setDisabled(false), 40);
+    setCards(shuffledCards);
+    setScore(0);
   };
 
   useEffect(() => {
-    checkMatch();
-    console.log(cards);
-  }, [choiceTwo]);
+    shuffleCards();
+  }, [pairs]); // Re-shuffle cards when 'pairs' changes
+
+  // Handlers for setting the number of pairs (adjust the game size)
+  const handleSetPairs = (numPairs) => {
+    setPairs(numPairs);
+    shuffleCards(numPairs);
+  };
+
+  const checkMatch = () => {
+    if (choiceOne && choiceTwo) {
+      setDisabled(true);
+      if (choiceOne.img === choiceTwo.img) {
+        setScore((prevScore) => prevScore + 10);
+        setCards((prevCards) => {
+          return prevCards.map((card) => {
+            if (card.img === choiceOne.img) {
+              return { ...card, matched: true };
+            } else {
+              return card;
+            }
+          });
+        });
+        resetTurns();
+      } else {
+        setTimeout(() => resetTurns(), 1000);
+      }
+    }
+  };
+
+  const resetTurns = () => {
+    setChoiceOne(null);
+    setChoiceTwo(null);
+    setDisabled(false);
+  };
+
+  const cardClicked = (card) => {
+    choiceOne ? setChoiceTwo(card) : setChoiceOne(card);
+  };
 
   useEffect(() => {
     shuffleCards();
   }, []);
 
+  useEffect(() => {
+    if (choiceOne && choiceTwo) {
+      checkMatch();
+    }
+  }, [choiceOne, choiceTwo]);
+
+  const gridSize = pairs === 4 ? "large" : pairs === 6 ? "medium" : "small";
+
+  const cardStyle = {
+    large: { width: "calc(100% - 10px)", fontSize: "1rem" }, 
+    medium: { width: "calc(75% - 10px)", fontSize: "0.9rem" }, 
+    small: { width: "calc(60% - 10px)", fontSize: "0.8rem" }, 
+  }[gridSize];
+
   return (
     <div className="p-10 text-center">
-      <button
-        className="rounded-lg border-2 border-white p-2 transition-colors hover:bg-pink-500"
-        onClick={shuffleCards}
-      >
+      <div className="grid-buttons">
+        <button onClick={() => handleSetPairs(4)} className="game-size-btn">
+          Easy
+        </button>
+        <button onClick={() => handleSetPairs(6)} className="game-size-btn">
+          Medium
+        </button>
+        <button onClick={() => handleSetPairs(8)} className="game-size-btn">
+          Hard
+        </button>
+      </div>
+      <button onClick={() => shuffleCards()} className="new-game-btn">
         New Game
       </button>
-      <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-        {cards.map((card) => {
-          const props = {
-            card,
-            flipped: card === choiceOne || card === choiceTwo || card.matched,
-          };
-          return <Card key={card.id} {...props} />;
-        })}
-      </div>
       <div className="mt-10">
-        <p className="text-2xl">Turns: {turns}</p>
+        <p className="text-2xl">Score: {score}</p>{" "}
+      </div>
+      <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+        {cards.map((card) => (
+          <div style={cardStyle} className="card-container" key={card.id}>
+            <Card
+              key={card.id}
+              card={card}
+              handleChoice={cardClicked}
+              flipped={card === choiceOne || card === choiceTwo || card.matched}
+              disabled={disabled}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
