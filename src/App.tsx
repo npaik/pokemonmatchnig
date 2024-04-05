@@ -263,6 +263,7 @@ function App() {
       </div>
       <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
         {cards.map((card) => (
+          // @ts-ignore
           <div style={cardStyle} className="card-container" key={card.id}>
             <Card
               // @ts-ignore
