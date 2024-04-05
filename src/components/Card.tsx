@@ -1,6 +1,6 @@
-import React from "react";
 import coverImg from "../assets/pokemoncardback.jpg";
 
+// @ts-ignore
 function Card({ card, handleChoice, flipped, disabled }) {
   const handleClick = () => {
     if (!flipped && !disabled) {
